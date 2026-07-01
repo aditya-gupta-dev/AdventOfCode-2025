@@ -5,7 +5,62 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
+
+func PartTwo() int64 { 
+	data, err := os.ReadFile("input-three.txt")
+	if err != nil { 
+		panic(err)
+	}
+	input := string(data)
+	scanner := bufio.NewScanner(strings.NewReader(strings.TrimSpace(input)))
+	var totalJoltage int64 = 0
+	
+	const k = 12 
+
+	for scanner.Scan() {
+		bank := scanner.Text()
+		if len(bank) == 0 {
+			continue
+		}
+
+		toDrop := len(bank) - k
+		if toDrop < 0 {
+			toDrop = 0
+		}
+
+		var stack []byte
+		
+		for i := 0; i < len(bank); i++ {
+			digit := bank[i]
+			
+			for toDrop > 0 && len(stack) > 0 && digit > stack[len(stack)-1] {
+				stack = stack[:len(stack)-1]
+				toDrop--
+			}
+			stack = append(stack, digit)
+		}
+
+		if toDrop > 0 {
+			stack = stack[:len(stack)-toDrop]
+		}
+		
+		if len(stack) > k {
+			stack = stack[:k]
+		}
+
+		val, err := strconv.ParseInt(string(stack), 10, 64)
+		if err != nil {
+			fmt.Printf("Failed to parse %s: %v\n", string(stack), err)
+			continue
+		}
+		
+		totalJoltage += val
+	}
+
+	return totalJoltage
+}
 
 func PartOne() {
 	parseBatteries := func(line string) []int {
@@ -57,66 +112,7 @@ func PartOne() {
 	fmt.Println(total)
 }
 
-func PartTwo() {
-	const required = 12
 
-	parseBatteries := func(line string) []int {
-		var batteries []int = make([]int, len(line))
-		for i, text := range line {
-			battery, err := strconv.Atoi(string(text))
-			if err != nil {
-				panic(err)
-			}
-			batteries[i] = battery
-		}
-		return batteries
-	}
-
-	solveBatteries := func(batteries []int) string {
-		var result []byte = make([]byte, 0, required)
-		var start int = 0
-
-		for i := 0; i < required; i++ {
-			remaining := required - i
-			end := len(result) - remaining + 1
-			maxDigit := batteries[start]
-			pos := start
-
-			for j := start; j < end; j++ {
-				if batteries[j] > maxDigit {
-					maxDigit = batteries[j]
-					pos = j
-				}
-			}
-
-			result = append(result, byte(maxDigit))
-			start = pos + 1
-		}
-		return string(result)
-	}
-
-	file, err := os.Open("input-three.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	var total int64 = 0
-	var scanner = bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		var batteries = scanner.Text()
-		var joltage int64 = 0
-		joltageStr := solveBatteries(parseBatteries(batteries))
-		for _, ch := range joltageStr {
-			joltage = joltage*10 + int64(ch-'0')
-		}
-		total += joltage
-	}
-
-	fmt.Println(total)
-}
-
-func main() {
-	PartOne()
+func main() { 
+	fmt.Println(PartTwo())
 }
