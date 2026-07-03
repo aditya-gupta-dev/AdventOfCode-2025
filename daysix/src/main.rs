@@ -42,9 +42,28 @@ impl Solution {
 
         result.iter().sum()
     }
+
+    fn part_two(file_name: &String) -> i128 {
+        let mut nums: Vec<Vec<i32>> = Vec::new();
+        let data = String::from_utf8(fs::read(file_name).unwrap()).unwrap();
+
+        for line in data.lines().take(data.lines().count() - 1) {
+            nums.push(
+                line.split_whitespace()
+                    .collect::<Vec<&str>>()
+                    .iter()
+                    .map(|item| item.trim().parse::<i32>().unwrap())
+                    .collect(),
+            );
+        }
+
+        23
+    }
 }
 
 fn main() {
     let file_name: String = String::from("input-six.txt");
+
     println!("part_one = {}", Solution::part_one(&file_name));
+    println!("part_two = {}", Solution::part_two(&file_name));
 }
