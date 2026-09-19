@@ -44,20 +44,81 @@ impl Solution {
     }
 
     fn part_two(file_name: &String) -> i128 {
-        let mut nums: Vec<Vec<i32>> = Vec::new();
-        let data = String::from_utf8(fs::read(file_name).unwrap()).unwrap();
+        let content = fs::read_to_string(file_name).expect("Failed to read input file");
 
-        for line in data.lines().take(data.lines().count() - 1) {
-            nums.push(
-                line.split_whitespace()
-                    .collect::<Vec<&str>>()
-                    .iter()
-                    .map(|item| item.trim().parse::<i32>().unwrap())
-                    .collect(),
-            );
+        let lines: Vec<&str> = content.lines().collect();
+        if lines.is_empty() {
+            return 0;
         }
 
-        23
+        let max_len = lines.iter().map(|l| l.len()).max().unwrap_or(0);
+
+        let grid: Vec<Vec<char>> = lines
+            .iter()
+            .map(|line| {
+                let mut chars: Vec<char> = line.chars().collect();
+                chars.resize(max_len, ' ');
+                chars
+            })
+            .collect();
+
+        let num_rows = grid.len();
+        let num_cols = max_len;
+
+        let mut problems: Vec<Vec<usize>> = Vec::new();
+        let mut current_cols: Vec<usize> = Vec::new();
+
+        for col in 0..num_cols {
+            let is_empty = (0..num_rows).all(|row| grid[row][col].is_whitespace());
+
+            if is_empty {
+                if !current_cols.is_empty() {
+                    problems.push(std::mem::take(&mut current_cols));
+                }
+            } else {
+                current_cols.push(col);
+            }
+        }
+        if !current_cols.is_empty() {
+            problems.push(current_cols);
+        }
+
+        let mut grand_total: i128 = 0;
+
+        for prob_cols in problems {
+            let mut op = '+';
+            let mut numbers: Vec<i128> = Vec::new();
+
+            for &col in &prob_cols {
+                // Check the last row for the operator (+ or *)
+                let last_char = grid[num_rows - 1][col];
+                if last_char == '+' || last_char == '*' {
+                    op = last_char;
+                }
+
+                let mut num_str = String::new();
+                for row in 0..(num_rows - 1) {
+                    let ch = grid[row][col];
+                    if ch.is_ascii_digit() {
+                        num_str.push(ch);
+                    }
+                }
+
+                if let Ok(val) = num_str.parse::<i128>() {
+                    numbers.push(val);
+                }
+            }
+
+            let result = match op {
+                '+' => numbers.iter().sum::<i128>(),
+                '*' => numbers.iter().product::<i128>(),
+                _ => 0,
+            };
+
+            grand_total += result;
+        }
+
+        grand_total
     }
 }
 
